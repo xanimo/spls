@@ -1,0 +1,52 @@
+#!/bin/bash
+export LC_ALL=C
+set -e -o pipefail
+
+address=
+pubkey_hash=
+type_of_query() {
+    case "$(./spls -c detect -d ${query})" in
+        "-a ${query}") 
+            address=${query};
+            echo $address;
+            pubkey_hash=$(./spls -c convert -a ${query});
+            echo $pubkey_hash;
+        ;;
+        "-p ${query}") 
+            pubkey_hash=${query};
+            echo $pubkey_hash;
+            address=$(./spls -c convert -p ${query});
+            echo $address;
+        ;;
+    esac
+}
+
+type_of_query;
+
+parse_utxos() {
+    echo "$address" > $address
+    while IFS= read -r line
+    do
+        txid=$(echo "$line" | grep "UTXO #" | cut -c 18-82);
+        vout=$(echo "$line" | grep "tx_pos " | cut -c 90);
+        height=$(echo "$line" | grep "height " | cut -c 99-108);
+        value=$(echo "$line" | grep "value " | cut -c 115-);
+        echo txid:          $txid >> $address;
+        echo vout:          $vout >> $address;
+        echo address:       $address >> $address;
+        echo script_pubkey: $pubkey_hash >> $address;
+        echo height:        ${height//,} >> $address;
+        value=$(echo ${value//,});
+        echo value:         $(./spls -c coins -f $value) >> $address;
+    done < utxos;
+}
+
+# craft transaction on the fly without need for verification
+# since our transaction index is already verified...
+ssh <your user@your host> -t '<your binary>' + ${query} > tmp;
+# split history from utxo and keep in separate files to parse further
+cat tmp | grep "History " > txos;
+cat tmp | grep "UTXO #" > utxos;
+rm tmp;
+parse_utxos;
+make build && ./spls -c import $(./spls -c detect -d ${query})

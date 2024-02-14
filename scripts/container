@@ -1,0 +1,19 @@
+#!/bin/bash
+export LC_ALL=C
+set -e -o pipefail
+
+./scripts/check --path
+
+SYSUSER=$(source .env; echo $USERNAME)
+USER_ID="$(id -u ${SYSUSER})"
+GROUP_ID="$(id -g ${SYSUSER})"
+make user
+echo "Building container for system user: $SYSUSER ($(echo uid=$(id -u $SYSUSER)):$(echo gid=$(id -g $SYSUSER)))"
+docker buildx build -t xanimo/spls \
+--build-arg PLATFORM=$(./scripts/detect host_arch) \
+--build-arg REPO=local \
+--build-arg USERNAME=$SYSUSER \
+--build-arg USER_ID=$USER_ID \
+--build-arg GROUP_ID=$GROUP_ID \
+--no-cache \
+. --load

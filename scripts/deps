@@ -1,0 +1,20 @@
+#!/bin/bash
+export LC_ALL=C
+set -e -o pipefail
+
+LIBDOGECOIN_ARCH=$(./scripts/detect)
+LIBDOGECOIN_VERSION=0.1.3
+LIBDOGECOIN_FILE=libdogecoin-$LIBDOGECOIN_VERSION-$LIBDOGECOIN_ARCH.tar.gz
+LIBDOGECOIN_CHECKSUMS=SHA256SUMS.asc
+LIBDOGECOIN_URL=https://github.com/dogecoinfoundation/libdogecoin/releases/download/v$LIBDOGECOIN_VERSION/
+
+if [ ! -d "bin" ]; then
+    wget $LIBDOGECOIN_URL$LIBDOGECOIN_FILE
+    wget $LIBDOGECOIN_URL$LIBDOGECOIN_CHECKSUMS
+    grep $LIBDOGECOIN_FILE $LIBDOGECOIN_CHECKSUMS | sha256sum -c
+    tar -xvf $LIBDOGECOIN_FILE
+    rm $LIBDOGECOIN_FILE
+    cp -r libdogecoin-$LIBDOGECOIN_VERSION-$LIBDOGECOIN_ARCH/* .
+    rm -rf docs examples checksums.txt LICENSE SHA256SUMS.asc
+    rm -rf libdogecoin-$LIBDOGECOIN_VERSION-$LIBDOGECOIN_ARCH
+fi

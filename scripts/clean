@@ -1,0 +1,13 @@
+#!/bin/bash
+export LC_ALL=C
+set -e -o pipefail
+
+pushd `pwd`
+rm -rf \
+./bin \
+./lib \
+./include/dogecoin.h \
+./include/libdogecoin.h \
+./include/constants.h \
+./include/uthash.h
+popd

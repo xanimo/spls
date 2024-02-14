@@ -1,0 +1,89 @@
+#!/bin/bash
+export LC_ALL=C
+set -e -o pipefail
+
+if [ $# -eq 0 ]; then
+    echo "No arguments provided"
+    exit 1
+fi
+
+has_param() {
+    local term="$1"
+    shift
+    for arg; do
+        if [[ $arg == "$term" ]]; then
+            return 0
+        fi
+    done
+    return 1
+}
+
+insideDocker() {
+# apparently this will not work for docker macos
+if [ -n "$(grep 'kthreadd' /proc/2/status 2>/dev/null)" ]; then
+    echo "sudo"
+else
+    echo "";
+fi
+}
+
+if has_param '--path' "$@"; then
+git_root() {
+    git rev-parse --show-toplevel 2> /dev/null
+}
+
+same_dir() {
+    local resolved1 resolved2
+    resolved1="$(git_root)"
+    resolved2="$(echo `pwd`)"
+    [ "$resolved1" = "$resolved2" ]
+}
+
+print_warning() {
+cat << EOF
+ERR: This script must be invoked from the top level of the git repository
+Hint: This may look something like:
+    contrib/scripts/run.sh
+EOF
+}
+
+if ! same_dir "${PWD}" "$(git_root)" && ! insideDocker; then
+    print_warning
+    exit 1
+fi
+fi
+
+if has_param '--docker' "$@"; then
+    insideDocker
+fi
+
+if has_param '--tools' "$@"; then
+check_tools() {
+    for cmd in "$@"; do
+        if ! command -v "$cmd" > /dev/null 2>&1; then
+            echo "ERR: This script requires that '$cmd' is installed and available in your \$PATH"
+            echo $@
+        fi
+    done
+    echo 1
+}
+
+ERROR=0
+MSG=""
+for i in "$@"
+do
+case $i in
+    --tools=*)
+        check_tools ${i#*=}
+    ;;
+    *) ERROR=1;;
+esac
+done
+
+if [ "$ERROR" ]; then
+    echo $MSG
+    exit $ERROR
+elif [ "$MSG" ]; then
+    echo $MSG
+fi
+fi

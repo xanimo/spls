@@ -1,0 +1,11 @@
+.env
+D*
+spls
+txos
+utxos
+include/constants.h
+include/dogecoin.h
+include/libdogecoin.h
+include/uthash.h
+bin/*
+lib/*

@@ -1,0 +1,17 @@
+#!/bin/bash
+export LC_ALL=C
+set -e -o pipefail
+
+SYSUSER=$(source .env; echo $USER)
+USER_ID="$(id -u ${SYSUSER})"
+GROUP_ID="$(id -g ${SYSUSER})"
+
+echo $SYSUSER
+
+if [ "$1" = "./bin/spvnode" ] ; then
+    echo
+    exec gosu "$SYSUSER" "$@" -c -d -l -b -p scan
+fi
+
+echo
+exec gosu "$SYSUSER" "$@"

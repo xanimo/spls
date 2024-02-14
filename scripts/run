@@ -1,0 +1,5 @@
+#!/bin/bash
+export LC_ALL=C
+set -e -o pipefail
+
+docker run -d --net=host --name spls xanimo/spls:latest

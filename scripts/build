@@ -1,0 +1,12 @@
+#!/bin/bash
+export LC_ALL=C
+set -e -o pipefail
+
+./scripts/check --path
+
+if [ ! $(./scripts/check --tools="gcc docker") ]; then
+    make deps
+fi
+
+gcc -static ./src/*.c -I./include -L./lib -ldogecoin -o spls
+make container
